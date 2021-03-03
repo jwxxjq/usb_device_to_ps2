@@ -1,6 +1,6 @@
-# usb_keyboard_to_ps2
+# usb_device_to_ps2
 
-USB键盘转ps2接口
+USB键盘/鼠标转ps2接口
 
 based on Arduino
 
