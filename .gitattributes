@@ -1,2 +1,11 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+
+.svn/wc.db-journal
+.svn/wc.db
+.svn/format
+.svn/entries
+.svn/*
+
+usb_device_to_ps2_arduino/.pio
+usb_device_to_ps2_arduino/.vscode/*
+usb_device_to_ps2_arduino/.gitignore
+usb_device_to_ps2_arduino/.travis.yml
