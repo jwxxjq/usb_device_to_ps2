@@ -137,6 +137,8 @@ int PS2dev::write(unsigned char data)
 }
 
 int PS2dev::available() {
+  //return 0 if bus idle (clk & data are both high)
+  //return 1 if bus busy (computer wants to send data)
   //delayMicroseconds(BYTEWAIT);
   return ( (digitalRead(_ps2data) == LOW) || (digitalRead(_ps2clk) == LOW) );
 }
@@ -240,11 +242,14 @@ void PS2dev::ack()
 int PS2dev::keyboard_reply(unsigned char cmd, unsigned char *leds)
 {
   unsigned char val;
-  unsigned char enabled;
+//  unsigned char enabled;
   switch (cmd)
   {
   case 0xFF: //reset
+    init_done = 0;
+    enabled = 0;
     ack();
+    delay(200); //delay some time
     //the while loop lets us wait for the host to be ready
     while(write(0xAA)!=0);
     break;
@@ -268,11 +273,13 @@ int PS2dev::keyboard_reply(unsigned char cmd, unsigned char *leds)
   case 0xF3: //set typematic rate
     ack();
     if(!read(&val)) ack(); //do nothing with the rate
+    init_done = 1;
+    enabled = 1;
     break;
   case 0xF2: //get device id
     ack();
-    write(0xAB);
-    write(0x83);
+    while(write(0xAB));
+    while(write(0x83));
     break;
   case 0xF0: //set scan code set
     ack();
@@ -292,6 +299,9 @@ int PS2dev::keyboard_reply(unsigned char cmd, unsigned char *leds)
 #endif
     return 1;
     break;
+  default:
+    ack();
+    break;
   }
   return 0;
 }
@@ -308,8 +318,11 @@ int PS2dev::keyboard_handle(unsigned char *leds) {
 // Presses then releases one of the non-special characters
 int PS2dev::keyboard_mkbrk(unsigned char code)
 {
+  if (available()){return -1;}
   write(code);
+  if (available()){return -1;}
   write(0xF0);
+  if (available()){return -1;}
   write(code);
   return 0;
 }
@@ -317,13 +330,16 @@ int PS2dev::keyboard_mkbrk(unsigned char code)
 // Presses one of the non-special characters
 int PS2dev::keyboard_press(unsigned char code)
 {
+  if (available()){return -1;}
 	return write(code);
 }
 
 // Releases one of the non-special characters
 int PS2dev::keyboard_release(unsigned char code)
 {
+  if (available()){return -1;}
 	write(0xf0);
+  if (available()){return -1;}
 	write(code);
 
 	return 0;
@@ -332,17 +348,21 @@ int PS2dev::keyboard_release(unsigned char code)
 // Presses one of the special characters
 int PS2dev::keyboard_press_special(unsigned char code)
 {
+  if (available()){return -1;}
 	write(0xe0);
+  if (available()){return -1;}
 	write(code);
-
 	return 0;
 }
 
 // Releases one of the special characters
 int PS2dev::keyboard_release_special(unsigned char code)
 {
+  if (available()){return -1;}
 	write(0xe0);
+  if (available()){return -1;}
 	write(0xf0);
+  if (available()){return -1;}
 	write(code);
 
 	return 0;
@@ -351,10 +371,15 @@ int PS2dev::keyboard_release_special(unsigned char code)
 // Presses then releases one of the special characters
 int PS2dev::keyboard_special_mkbrk(unsigned char code)
 {
+  if (available()){return -1;}
 	write(0xe0);
+  if (available()){return -1;}
 	write(code);
+  if (available()){return -1;}
 	write(0xe0);
-	write(0xf0);
+  if (available()){return -1;}
+  write(0xf0);
+  if (available()){return -1;}
 	write(code);
 
 	return 0;
@@ -363,9 +388,13 @@ int PS2dev::keyboard_special_mkbrk(unsigned char code)
 // Presses Printscreen
 int PS2dev::keyboard_press_printscreen()
 {
+  if (available()){return -1;}
 	write(0xe0);
+  if (available()){return -1;}
 	write(0x12);
+  if (available()){return -1;}
 	write(0xe0);
+  if (available()){return -1;}
 	write(0x7c);
 
 	return 0;
@@ -374,11 +403,17 @@ int PS2dev::keyboard_press_printscreen()
 // Releases Printscreen
 int PS2dev::keyboard_release_printscreen()
 {
+  if (available()){return -1;}
 	write(0xe0);
+  if (available()){return -1;}
 	write(0xf0);
+  if (available()){return -1;}
 	write(0x7c);
+  if (available()){return -1;}
 	write(0xe0);
+  if (available()){return -1;}
 	write(0xf0);
+  if (available()){return -1;}
 	write(0x12);
 
 	return 0;
@@ -387,22 +422,30 @@ int PS2dev::keyboard_release_printscreen()
 // Presses then releases Printscreen
 int PS2dev::keyboard_mkbrk_printscreen()
 {
-	keyboard_press_printscreen();
-	keyboard_release_printscreen();
-
+	if (keyboard_press_printscreen() ||	keyboard_release_printscreen()){
+    return -1;
+  }
 	return 0;
 }
 
 // Presses/Releases Pause/Break
 int PS2dev::keyboard_pausebreak()
 {
+  if (available()){return -1;}
 	write(0xe1);
+  if (available()){return -1;}
 	write(0x14);
+  if (available()){return -1;}
 	write(0x77);
+  if (available()){return -1;}
 	write(0xe1);
+  if (available()){return -1;}
 	write(0xf0);
+  if (available()){return -1;}
 	write(0x14);
+  if (available()){return -1;}
 	write(0xe0);
+  if (available()){return -1;}
 	write(0x77);
 
 	return 0;

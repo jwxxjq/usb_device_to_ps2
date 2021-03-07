@@ -168,6 +168,9 @@ class PS2dev
 		int keyboard_handle(unsigned char *leds);
 		int keyboard_mkbrk(unsigned char code);
 		int keyboard_special_mkbrk(unsigned char code);
+		bool init_done = 0;
+		bool enabled = 0;
+
 	private:
 		int _ps2clk;
 		int _ps2data;
